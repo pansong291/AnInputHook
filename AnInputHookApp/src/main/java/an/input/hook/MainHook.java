@@ -24,7 +24,8 @@ public class MainHook implements IXposedHookLoadPackage
    Utils.log2F("已过滤 " + p1.packageName);
    return;
   }
-  switch(Utils.getHookMode(p1.packageName))
+  Utils.loadHookConfig(p1.packageName);
+  switch(HookConfig.hookMode)
   {
    case 0:
     ich.hook(p1);

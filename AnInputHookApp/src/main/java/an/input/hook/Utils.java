@@ -7,8 +7,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.PrintStream;
-import java.util.Date;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class Utils
 {
@@ -73,9 +73,16 @@ public class Utils
  
  static String superDirectory = "/Android/data/an.input.hook";
  
- public static int getHookMode(String pn)
+ public static void loadHookConfig(String pn)
  {
-  int hookMode = -1;
+  if(HookConfig.hookMode >= 0)
+  {
+   log2F("已加载配置，无需再次加载");
+   return;
+  }else
+  {
+   log2F("加载配置");
+  }
   try{
    File file = new File(Environment.getExternalStorageDirectory().getPath() + superDirectory);
    if(!file.exists())
@@ -86,12 +93,13 @@ public class Utils
    if(!fileConfig.exists())
    {
     PrintStream ps = new PrintStream(new FileOutputStream(fileConfig, true));
-    ps.println("//这是单行注释，以两个斜除号开头，注释的内容会被忽略掉");
-    ps.println("//配置文件有固定格式，请勿随意修改");
-    ps.println("//需重启手机才能生效");
-    ps.println("监控模式:0 //可填值有0和1两种模式");
+    ps.println("// 这是单行注释，以两个斜除号开头，注释的内容会被忽略掉");
+    ps.println("// 配置文件有固定格式，请勿随意修改");
+    ps.println("// 需重启手机才能生效");
+    ps.println(HookConfig.defCfgValStr[0]);
+    ps.println(HookConfig.defCfgValStr[1]);
     ps.close();
-    hookMode = 0;
+    HookConfig.setConfig(HookConfig.defCfgValInt);
    }else
    {
     BufferedReader bufRead = new BufferedReader(new FileReader(fileConfig));
@@ -105,28 +113,40 @@ public class Utils
       readStr = readStr.substring(0, outcomIndex);
      }
      readStr = readStr.replaceAll("\\s", "");
-     if(readStr.contains("监控模式"))
+     if(readStr.contains("监控模式:"))
      {
-      hookMode = Integer.parseInt(readStr.split(":")[1]);
+      HookConfig.hookMode = Integer.parseInt(readStr.split(":")[1]);
+     }else if(readStr.contains("记录类名:"))
+     {
+      HookConfig.noteClassName = Integer.parseInt(readStr.split(":")[1]);
      }
     }
     bufRead.close();
-    if(hookMode < 0)
+    if(!HookConfig.initedValue())
     {
      PrintStream ps = new PrintStream(new FileOutputStream(fileConfig, true));
-     ps.println("监控模式:0 //可填值有0和1两种模式");
+     int[] array = HookConfig.getConfigArray();
+     for(int i = 0;i < array.length;i++)
+     {
+      if(array[i] != -1)continue;
+      ps.println(HookConfig.defCfgValStr[i]);
+      array[i] = HookConfig.defCfgValInt[i];
+     }
+     //ps.println("监控模式:0 // 可填值有0和1两种模式");
+     //ps.println("记录类名:0 // 1记录，0不记录");
      ps.close();
-     hookMode = 0;
+     HookConfig.setConfig(array);
+     //HookConfig.hookMode = 0;
+     //HookConfig.noteClassName = 0;
     }
    }
 
-   log2F("hookMode:" + hookMode);
   }catch(Exception e)
   {
    XposedBridge.log(e.getMessage()+"\n文件读写异常:"+pn);
    writeLogFile(e.getMessage()+"\n文件读写异常:"+pn);
   }
-  return hookMode;
+  
  }
 
  public static boolean exceptPackage(String packageName)
@@ -143,10 +163,10 @@ public class Utils
    if(!fileExcept.exists())
    {
     PrintStream ps = new PrintStream(new FileOutputStream(fileExcept, true));
-    ps.println("//这是单行注释，以两个斜除号开头，注释的内容会被忽略掉");
-    ps.println("//过滤名单里填写包名，一行一个包名，过滤的包将不会被记录");
-    ps.println("//需重启手机才能生效");
-    ps.println("com.google.android.webview //Android System WebView");
+    ps.println("// 这是单行注释，以两个斜除号开头，注释的内容会被忽略掉");
+    ps.println("// 过滤名单里填写包名，一行一个包名，过滤的包将不会被记录");
+    ps.println("// 需重启手机才能生效");
+    ps.println("com.google.android.webview // Android System WebView");
     ps.close();
     except = packageName.equals("com.google.android.webview");
    }else
@@ -163,7 +183,7 @@ public class Utils
      }
      readStr = readStr.replaceAll("\\s","");
      except = packageName.equals(readStr);
-     log2F(packageName + "读取过滤名单:" + readStr + "=" + except);
+     log2F(packageName + " 读取过滤名单:" + readStr + "=" + except);
      if(except)break;
     }
     bufRead.close();
@@ -190,10 +210,10 @@ public class Utils
    if(!fileExcept.exists())
    {
     PrintStream ps = new PrintStream(new FileOutputStream(fileExcept, true));
-    ps.println("//这是单行注释，以两个斜除号开头，注释的内容会被忽略掉");
-    ps.println("//过滤名单里填写包名，一行一个包名，过滤的包将不会被记录");
-    ps.println("//需重启手机才能生效");
-    ps.println("com.google.android.webview //Android System WebView");
+    ps.println("// 这是单行注释，以两个斜除号开头，注释的内容会被忽略掉");
+    ps.println("// 过滤名单里填写包名，一行一个包名，过滤的包将不会被记录");
+    ps.println("// 需重启手机才能生效");
+    ps.println("com.google.android.webview // Android System WebView");
     ps.close();
     exceptList.add("com.google.android.webview");
    }else

